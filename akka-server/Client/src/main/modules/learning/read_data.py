@@ -15,7 +15,7 @@ class ImportData():
                 targets = pd.read_csv(target_path,  sep = delim)
         else:
             try:
-                targets = loaded_data[target_name].to_numpy()
+                targets = loaded_data[target_naflaunchme].to_numpy()
             except:
                 targets = np.empty(0)
             data = loaded_data.drop(target_name).to_numpy()

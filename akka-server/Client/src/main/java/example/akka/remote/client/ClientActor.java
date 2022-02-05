@@ -38,6 +38,7 @@ public class ClientActor extends UntypedActor {
             // // flserver.eastus.azurecontainer.io:5000 - azure address
             this.selection = getContext().actorSelection("akka.tcp://AkkaRemoteServer@" + address + "/user/Selector");
             this.injector = getContext().actorSelection("akka.tcp://AkkaRemoteServer@" + address + "/user/Injector");
+
             this.clientsFromWhomWeReceivedRValues = new HashSet<>();
         } catch (IOException e) {
             e.printStackTrace();
@@ -70,10 +71,14 @@ public class ClientActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         // Message received at the beginning from main class
         if (message instanceof Messages.StartLearning) {
+            log.info("***** CA received 'StartLearning' message");
             this.taskId = ((Messages.StartLearning) message).id;
 
             // Finding proper module for specified task id
             List<ModulesManager.ModuleDTO> modules = ModulesManager.GetAvailableModules();
+
+            log.info("MODULES FROM MODULES MANAGER: ");
+            modules.stream().forEach( x -> log.info("fileName:{} taskId:{}" , x.fileName, x.taskId) );
 
             ModulesManager.ModuleDTO module = modules
                     .stream()
@@ -92,11 +97,13 @@ public class ClientActor extends UntypedActor {
             selection.tell(new Messages.JoinRoundRequest(LocalDateTime.now(), this.taskId, this.clientId, this.address, this.port), getSelf());
             log.info("After send to selector, address -> " + this.address);
         } else if(message instanceof Messages.GetModulesListResponse) {
+            log.info("***** CA received 'GetModulesListResponse' message");
             // Find the best module
             Messages.ModuleData module = this.findProperModuleStrategy(((Messages.GetModulesListResponse) message).modules);
             // Ask for module
             getSender().tell(new Messages.GetModuleRequest(module.fileName), getSelf());
         } else if (message instanceof Messages.GetModuleResponse) {
+            log.info("***** CA received 'GetModuleResponse' message");
             // Save received module
             Messages.GetModuleResponse module = (Messages.GetModuleResponse) message;
             log.info("File name: " + module.fileName + ", length: " + module.content.length);
@@ -107,11 +114,13 @@ public class ClientActor extends UntypedActor {
             this.moduleFileName = module.fileName;
             selection.tell(new Messages.JoinRoundRequest(LocalDateTime.now(), this.taskId, this.clientId, this.address, this.port), getSelf());
         } else if (message instanceof Messages.JoinRoundResponse) {
+            log.info("***** CA received 'JoinRoundResponse' message");
             // Response if device can join round
             Messages.JoinRoundResponse result = (Messages.JoinRoundResponse) message;
             log.info("Got join round response {}", result.isLearningAvailable);
             // TODO Need to be handled negative scenario
         } else if (message instanceof Messages.StartLearningProcessCommand) {
+            log.info("***** CA received 'StartLearningProcessCommand' message");
             // Server told that device should run learning module
             log.info("Received start learning command");
 
@@ -134,6 +143,7 @@ public class ClientActor extends UntypedActor {
                 .scheduler()
                 .scheduleOnce(delay, server, new Messages.StartLearningModule(), system.dispatcher(), getSelf());
         } else if (message instanceof Messages.AreYouAliveQuestion){
+            log.info("***** CA received 'AreYouAliveQuestion' message");
             log.info("I am alive!");
             // The client is alive
             this.server = getSender(); // from here we save the server reference
@@ -146,6 +156,7 @@ public class ClientActor extends UntypedActor {
 
 
         } else if (message instanceof Messages.ClientDataSpread){
+            log.info("***** CA received 'ClientDataSpread' message");
             Messages.ClientDataSpread castedMessage = (Messages.ClientDataSpread) message;
             this.numberOfClientstoAwait = castedMessage.numberOfClients; // number of clients
             this.contactMap = castedMessage.contactMap; // clients, references and public keys
@@ -162,6 +173,7 @@ public class ClientActor extends UntypedActor {
             ActorRef modelReader = system.actorOf(Props.create(ClientGetModelActor.class), "ClientGetModelActor");
             modelReader.tell(message, getSelf());
         } else if (message instanceof Messages.RValuesReady){
+            log.info("***** CA received 'RValuesReady' message");
             // sending R values to other clients
             Configuration.ConfigurationDTO configuration;
             Configuration configurationHandler = new Configuration();
@@ -179,6 +191,7 @@ public class ClientActor extends UntypedActor {
                 client.getValue().reference.tell(new Messages.SendRValue(this.clientId, bytes), getSelf());
             }
         } else if (message instanceof Messages.SendRValue){
+            log.info("***** CA received 'SendRValue' message");
             // who has sent the values so far?
             clientsFromWhomWeReceivedRValues.add( ((Messages.SendRValue) message).sender );
             log.info(clientsFromWhomWeReceivedRValues.toString());
@@ -204,11 +217,13 @@ public class ClientActor extends UntypedActor {
                 log.info("InterRes sent");
             }
         } else if (message instanceof Messages.TestMyModel){
+            log.info("***** CA received 'TestMyModel' message");
             ActorSystem system = getContext().system();
             // Start reading R values through a new actor
             ActorRef modelTester = system.actorOf(Props.create(ClientTestActor.class), "ClientTestActor");
             modelTester.tell(message, getSelf());
         } else if (message instanceof Messages.TestResults){
+            log.info("***** CA received 'TestResults' message");
             this.server.tell(message, getSelf());
             Configuration.ConfigurationDTO configuration;
             Configuration configurationHandler = new Configuration();

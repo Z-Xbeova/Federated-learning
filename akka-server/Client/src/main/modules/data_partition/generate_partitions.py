@@ -51,7 +51,12 @@ class PartitionGenerator:
 
     def partition(self, partition_number, partition_min_size, dir_save, data_prefix, target_prefix,
         shuffle, partition = 'random', data_asign = None):
-        self.dataset.targets = np.array(pd.array(self.dataset.targets).astype('category').codes)
+
+        print(self.dataset.targets[0:500])
+        if(self.dataset.targets.ndim < 2):
+            self.dataset.targets = np.array(pd.array(self.dataset.targets).astype('category').codes)
+
+
         
         if (shuffle):
             idx = np.arange(len(self.dataset.targets))
@@ -59,15 +64,21 @@ class PartitionGenerator:
             self.dataset.data = self.dataset.data[np.argsort(idx)]
             self.dataset.targets = self.dataset.targets[np.argsort(idx)]
 
+
+        if(self.dataset.targets.ndim < 2):
+            if partition == 'equal':
+                data, targets = self.partition_equally(partition_min_size, partition_number)
+
+            if partition == 'custom':
+                data, targets = self.partition_custom(partition_number, partition_min_size, data_asign)
+        if(self.dataset.targets.ndim >= 2 and partition != "random"):
+            raise ValueError('For multilabel target only random partition is available, friendly hint: better not use multilabel target :(')
+
+
         if partition == 'random':
             data = np.split(self.dataset.data[range(0, partition_number*partition_min_size )], partition_number)
             targets = np.split(self.dataset.targets[range(0, partition_number*partition_min_size)], partition_number)
-        
-        if partition == 'equal':
-            data, targets = self.partition_equally(partition_min_size, partition_number)
 
-        if partition == 'custom':
-            data, targets = self.partition_custom(partition_number, partition_min_size, data_asign)
 
         data = np.asarray(data)
         targets = np.asarray(targets)

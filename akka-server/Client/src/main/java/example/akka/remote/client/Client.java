@@ -22,7 +22,7 @@ public class Client {
         ActorRef client = system.actorOf(Props.create(ClientActor.class));
 
         // Send a Calc job
-        client.tell(new Messages.StartLearning("mnist"), ActorRef.noSender());
+        client.tell(new Messages.StartLearning("mimic"), ActorRef.noSender()); // todo mimic -> mnist
     }
 
     // overrides default port

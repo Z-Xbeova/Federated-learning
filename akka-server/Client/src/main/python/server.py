@@ -23,8 +23,10 @@ parser.add_argument(
     help="if set, websocket server worker will be started in verbose mode",
 )
 
+# todo fikusne patryk 03.02
 
 def main(**kwargs):  # pragma: no cover
+    print("------main----modules/python/server.py")
     """Helper function for spinning up a websocket participant."""
 
     # Create websocket worker
@@ -37,7 +39,7 @@ def main(**kwargs):  # pragma: no cover
     train_base = sy.BaseDataset(data=data, targets=dataset2.targets)
 
     # Tell the worker about the dataset
-    worker.add_dataset(train_base, key="mnist")
+    # worker.add_dataset(train_base, key="mnist") todo commented out
 
     # Start worker
     worker.start()
@@ -46,6 +48,7 @@ def main(**kwargs):  # pragma: no cover
 
 
 if __name__ == "__main__":
+    print("------__main__----modules/python/server.py")
     hook = sy.TorchHook(th)
 
     args = parser.parse_args()

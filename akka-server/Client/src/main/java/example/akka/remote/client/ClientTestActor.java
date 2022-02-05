@@ -21,6 +21,7 @@ public class ClientTestActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.TestMyModel){
+            log.info("***** ClientTestActor received 'TestMyModel' message");
             Configuration.ConfigurationDTO configuration;
             Configuration configurationHandler = new Configuration();
             configuration = configurationHandler.get();
@@ -37,6 +38,8 @@ public class ClientTestActor extends UntypedActor {
         }
     }
     private void testModel(){
+
+        log.info("***** ClientTestActor used 'testModel' method");
         Configuration.ConfigurationDTO configuration;
         Configuration configurationHandler = new Configuration();
         try {

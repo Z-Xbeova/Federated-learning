@@ -18,6 +18,7 @@ import codecs
 from torchvision.models import vgg11
 from model_configurations.simple_cnn import CNN
 from model_configurations.mnist_model import MNIST
+from model_configurations.mimic_model import MIMIC
 
 import syft as sy
 from syft.workers import websocket_client
@@ -54,6 +55,7 @@ def loss_fn(pred, target):
     return F.cross_entropy(input=pred, target=target.long())
 
 def define_and_get_arguments(args=sys.argv[1:]):
+    print("------define_and_get_arguments----modules/learning/local_model.py")
     parser = argparse.ArgumentParser(
         description="Run federated learning using websocket client workers."
     )
@@ -114,6 +116,7 @@ async def fit_model_on_worker(
     dp_threshold: float
 ):
 
+# fikusny TODO patryk 03.02
     train_config = sy.TrainConfig(
             model=traced_model,
             loss_fn=loss_fn,
@@ -126,7 +129,12 @@ async def fit_model_on_worker(
     )
 
     train_config.send(worker)
-    loss = await worker.async_fit(dataset_key="mnist", return_ids=[0])
+    # loss = await worker.async_fit(dataset_key="mnist", return_ids=[0]) # todo hardcoded for now
+
+    print("step C")
+    loss = await worker.async_fit(dataset_key="mimic", return_ids=[0])
+
+    print("step D")
     model = train_config.model_ptr.get().obj
 
 
@@ -160,7 +168,7 @@ async def fit_model_on_worker(
     # returning updated weights
     return worker.id, model, loss
 
-# DIfferential Privacy implementation
+# Differential Privacy implementation
 def setWeights(list_old, list_new, list_incr, variance, threshold):
     eps = 0.01  # to enable switching signs by weights
     for i, x in enumerate(list_old):
@@ -185,7 +193,10 @@ def setWeights(list_old, list_new, list_incr, variance, threshold):
     return list_incr
 
 def define_model(model_config, device, model_output):
+    print("------define_model----modules/learning/local_model.py, model_config: {}, device: {}", model_config, device)
     test_tensor = torch.zeros([1, 3, 224, 224])
+
+
     if (model_config == 'vgg'):
         model = vgg11(pretrained = True)
         model.classifier[6].out_features = model_output
@@ -203,6 +214,11 @@ def define_model(model_config, device, model_output):
     if (model_config == 'mnist'):
         model = MNIST().to(device)
         test_tensor = torch.zeros([1, 1, 28, 28])
+    if (model_config == 'mimic'): # todo Mikolaj DONE
+        print("step1")
+        model = MIMIC().to(device)
+        print("step2")
+        test_tensor = torch.zeros([1, 48, 19])
     return model, test_tensor
 
 def define_participant(id, port, **kwargs_websocket):
@@ -233,6 +249,8 @@ async def main():
     traced_model.train()
 
     learning_rate = args.lr
+
+    print("attempt - fit_model_on_worker")
     worker_id, model, loss_value = await fit_model_on_worker(
         worker=worker_instance,
         traced_model=traced_model,
@@ -244,6 +262,7 @@ async def main():
         dp_noise_variance=float(args.dp_noise_variance),
         dp_threshold=float(args.dp_threshold)
     )
+    print("after - fit_model_on_worker")
 
     # get weights and make R values
     """if args.model_config != 'cnn' and args.model_config != 'mnist':
@@ -271,6 +290,7 @@ async def main():
     # R values are stored in their own directory in order to simplify storage while working in localhost
 
 if __name__ == "__main__":
+    print("------__main__----modules/learning/local_model.py")
     # Logging setup
     FORMAT = "%(asctime)s | %(message)s"
     logging.basicConfig(format=FORMAT)

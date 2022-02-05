@@ -84,9 +84,11 @@ public class Aggregator extends UntypedActor {
         setThreshold(configuration.DP_threshold);
 
         if (message instanceof StartRound) {
+            log.info("----AGG received StartRound");
             // Message that round should start
             this.startRound();
         } else if (message instanceof InformAggregatorAboutNewParticipant) {
+            log.info("----AGG received InformAggregatorAboutNewParticipant");
             // Message about new participant taking part in the new round
             InformAggregatorAboutNewParticipant messageCasted = (InformAggregatorAboutNewParticipant)message;
             ActorRef deviceReference = messageCasted.deviceReference;
@@ -94,6 +96,7 @@ public class Aggregator extends UntypedActor {
             this.roundParticipants.put(messageCasted.clientId,
                     new ParticipantData(deviceReference, messageCasted.address, messageCasted.port));
         } else if (message instanceof ReadyToRunLearningMessageResponse) {
+            log.info("----AGG received ReadyToRunLearningMessageResponse");
             // Tell devices to run
             if (((ReadyToRunLearningMessageResponse) message).canStart) {
                 this.checkReadyToRunLearning.cancel();
@@ -103,6 +106,7 @@ public class Aggregator extends UntypedActor {
                 }
             }
         } else if (message instanceof StartLearningModule) {
+            log.info("----AGG received StartLearningModule");
             this.numberOfClientsToAwait = roundParticipants.size();
             // Message when any of participants started their modules and server can start his own learning module
             // Updates corresponding device entity
@@ -169,6 +173,7 @@ public class Aggregator extends UntypedActor {
                 // spreading references to let clients exchange data
             }
         } else if (message instanceof SendInterRes) {
+            log.info("----AGG received SendInterRes");
             // save InterRes
             // counting down clients to await InterRes values from
             this.numberOfClientsToAwait--;
@@ -200,6 +205,7 @@ public class Aggregator extends UntypedActor {
                 log.info("Time of learning round: "+timeOfLearning);
             }
         } else if (message instanceof TestResults) {
+            log.info("----AGG received TestResults");
             this.test_counter--;
             byte[] bytes = ((TestResults) message).bytes;
             String sender = ((TestResults) message).id;
@@ -215,6 +221,7 @@ public class Aggregator extends UntypedActor {
     }
 
     public void exchange(int minimum) {
+        log.info("----AGG used 'exchange' method");
         int numberOfParticipants = roundParticipants.size();
         Random keyGeneration = new Random();
 
@@ -268,6 +275,7 @@ public class Aggregator extends UntypedActor {
 
     // Starts new round
     private void startRound() {
+        log.info("----AGG used 'startRound' method");
         ActorSystem system = getContext().system();
 
         // Clears list of participants
@@ -293,6 +301,7 @@ public class Aggregator extends UntypedActor {
 
     // Starts server learning module
     private void runLearning() {
+        log.info("----AGG used 'runLearning' method");
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
 
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -306,7 +315,7 @@ public class Aggregator extends UntypedActor {
         // Executing module script as a command
         processBuilder
             .inheritIO()
-            .command("python3.8", configuration.secureAgg?configuration.serverModuleFilePathSA:configuration.serverModuleFilePath,
+            .command("python", configuration.secureAgg?configuration.serverModuleFilePathSA:configuration.serverModuleFilePath,
             // secure aggregation requires a different script to construct the model
             "--datapath", configuration.testDataPath,
             "--participantsjsonlist", tempvar,

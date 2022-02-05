@@ -24,7 +24,7 @@ public class ClientGetModelActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof Messages.ClientDataSpread){
-            log.info("Reading R values");
+            log.info("***** ClientGetModelActor received 'ClientDataSpread' message");
             Messages.ClientDataSpread castedMessage = ((Messages.ClientDataSpread) message);
             // prepare arguments to pass to the script
             this.clientId = castedMessage.clientId; // client id
@@ -48,6 +48,7 @@ public class ClientGetModelActor extends UntypedActor {
         }
     }
     private void readRValues(){
+        log.info("***** ClientGetModelActor used 'readRValues' method");
         Configuration.ConfigurationDTO configuration;
         try {
             Configuration configurationHandler = new Configuration();

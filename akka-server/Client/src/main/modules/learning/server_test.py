@@ -31,6 +31,7 @@ parser.add_argument("--data_set_id", type=int, help="id of data set", action="st
 
 
 def main(datapath, data_set_id, **kwargs):  # pragma: no cover
+    print("------main----modules/learning/server_test.py")
     """Helper function for spinning up a websocket participant."""
 
     # Create websocket worker
@@ -45,9 +46,15 @@ def main(datapath, data_set_id, **kwargs):  # pragma: no cover
 
     train_base = sy.BaseDataset(data=data, targets=targets)
 
-    # Tell the worker about the dataset
-    worker.add_dataset(train_base, key="mnist")
+    print("-0-0-0-0-0-0-0-0-0-0-0-0-0 server_test.py")
+    # FOR MIMIC
+    train_base = CustomDataset(imported_data=dataset,
+                               transform = transformation_seq)
+    train_base.targets = th.tensor(train_base.targets, dtype = th.int64)
 
+    # Tell the worker about the dataset
+    # worker.add_dataset(train_base, key="mnist") # todo hardcoded for now
+    worker.add_dataset(train_base, key="mimic")
     # Start worker
     worker.start()
 
@@ -55,6 +62,7 @@ def main(datapath, data_set_id, **kwargs):  # pragma: no cover
 
 
 if __name__ == "__main__":
+    print("------__main__----modules/learning/server_test.py")
     hook = sy.TorchHook(th)
 
     args = parser.parse_args()

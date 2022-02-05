@@ -10,6 +10,7 @@ import example.akka.remote.shared.Messages;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -40,6 +41,9 @@ public class Injector extends UntypedActor {
         log.info("onReceive({})", message);
 
         if (message instanceof GetModulesListRequest) {
+
+            log.info("---Injector received GetModulesListRequest response");
+            log.info("modules: " + modules);
             // Returns modules list
             List<Messages.ModuleData> filteredModules = modules
                     .stream()
@@ -47,6 +51,8 @@ public class Injector extends UntypedActor {
                     .collect(Collectors.toList());
             getSender().tell(new GetModulesListResponse(filteredModules), getSelf());
         } else if (message instanceof GetModuleRequest) {
+
+            log.info("---Injector received GetModuleRequest response");
             // Returns module asked by device, reads it end returns content
             String name = ((GetModuleRequest) message).name;
             log.info("Searching for file: {}", name);

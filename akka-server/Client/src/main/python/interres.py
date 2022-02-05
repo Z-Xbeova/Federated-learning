@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 def define_and_get_arguments(args=sys.argv[1:]):
+    print("------define_and_get_arguments----modules/python/interres.py")
     parser = argparse.ArgumentParser(
         description="Calculate InterRes values."
     )
@@ -19,6 +20,7 @@ def define_and_get_arguments(args=sys.argv[1:]):
     return args
 
 def main():
+    print("------main----modules/python/interres.py")
     args = define_and_get_arguments()
     id = args.id
     pathToResources = args.pathToResources

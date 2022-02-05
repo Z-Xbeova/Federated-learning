@@ -47,6 +47,7 @@ possible_augmentations = A.Compose(
                             A.Sharpen()])
 
 def augument_classes(data, target, mean_entries_per_class):
+    print("------augment_classes----modules/learning/client.py")
     new_entries = []
     new_targets = []
     entries_to_generate = int(mean_entries_per_class - len(target))
@@ -58,6 +59,7 @@ def augument_classes(data, target, mean_entries_per_class):
     return new_entries, new_targets
 
 def get_transformation_seq(model_config):
+    print("------get_transformation_seq----modules/learning/client.py")
     #predefined values to match model expectations
     transform_seq = []
     if (model_config == 'vgg'):
@@ -77,11 +79,16 @@ def get_transformation_seq(model_config):
         transform_seq = transforms.Compose([
             transforms.ToTensor()])
 
+    if (model_config == 'mimic'):
+        transform_seq = transforms.Compose([
+            transforms.ToTensor()])
+
     if (transform_seq == []):
         raise Exception('Model config not found')
     return transform_seq
 
 def main(details_dict, **kwargs):  # pragma: no cover
+    print("------main----modules/learning/client.py")
     """Helper function for spinning up a websocket participant."""
     #os.chdir("./akka-server/Client/src/main/modules")
     # Create websocket worker
@@ -98,10 +105,14 @@ def main(details_dict, **kwargs):  # pragma: no cover
         target_file_name= str(target_prefix + '_' + str(details_dict["data_set_id"]) + '.npy')
 
     dataset = ImportData(data_path = data_file_name, target_path = target_file_name)
-    dataset.data = [Image.fromarray(np.uint8(im)) for im in dataset.data]
+
+
+
+    # dataset.data = [Image.fromarray(np.uint8(im)) for im in dataset.data]
     unique_classes, counts = np.unique(dataset.targets, return_counts=True)
     dict_entries = dict(zip(unique_classes, counts))
     mean_entries_per_class = len(dataset.targets)/len(unique_classes)
+    """
     for image_class in unique_classes:
         index_target = np.squeeze(np.argwhere(dataset.targets == image_class))
         if dict_entries[image_class] < mean_entries_per_class and dict_entries[image_class] > 3:
@@ -109,17 +120,26 @@ def main(details_dict, **kwargs):  # pragma: no cover
             dataset.data = dataset.data + new_entries
             dataset.targets = np.concatenate((dataset.targets, new_targets))
 
+    """
     unique_classes, counts = np.unique(dataset.targets, return_counts=True)
     transformation_seq = get_transformation_seq(details_dict["model_config"])
+
+
+
     train_base = CustomDataset(imported_data=dataset, 
     transform = transformation_seq)
     train_base.targets = th.tensor(train_base.targets, dtype = th.int64)
     # check if tensors have correct dims
     sizes = list(map(np.shape, train_base.data))
+    #print(train_base.data[0]) # torch.Size([1, 48, 19]) MIMIC
     print(sizes[0])
 
     # Tell the worker about the dataset
-    worker.add_dataset(train_base, key="mnist")
+    # CHANGES - 03.02.2022 - adding MIMIC
+    if (details_dict["model_config"] == "mnist") or (details_dict["model_config"] == "cnn") or (details_dict["model_config"] == "vgg"):
+        worker.add_dataset(train_base, key="mnist")
+    if (details_dict["model_config"] == "mimic"):
+        worker.add_dataset(train_base, key="mimic")
     worker.serializer
     # Start worker
 
@@ -129,6 +149,7 @@ def main(details_dict, **kwargs):  # pragma: no cover
 
 
 if __name__ == "__main__":
+    print("------__name__----modules/learning/client.py")
     hook = sy.TorchHook(th)
 
     args = parser.parse_args()

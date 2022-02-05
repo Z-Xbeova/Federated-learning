@@ -1,5 +1,9 @@
 package example.akka.remote.client;
 
+import akka.actor.Props;
+import akka.actor.UntypedActor;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -8,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
+import javax.naming.Context;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,12 +21,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModulesManager {
+public class ModulesManager extends UntypedActor {
     public String taskId;
     public String fileName;
 
     // Returns saved modules. Reads data from json file
     public static List<ModuleDTO> GetAvailableModules() {
+
+
         String path = null;
         try {
             Configuration configurationHandler = new Configuration();
@@ -53,6 +60,7 @@ public class ModulesManager {
 
     // Saves module received from the server
     public static void SaveModule(String taskId, String fileName) {
+
         ModuleDTO newModule = new ModuleDTO(taskId, fileName);
 
         List<ModuleDTO> modules = GetAvailableModules();
@@ -77,6 +85,11 @@ public class ModulesManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onReceive(Object o) throws Exception {
+        // mock actor
     }
 
     public static class ModuleDTO {

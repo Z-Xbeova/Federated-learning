@@ -26,7 +26,7 @@ public class ClientRunModuleActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         // Message that says to run the module
         if (message instanceof Messages.RunModule) {
-            log.info( "Received RunModule command" );
+            log.info("***** ClientRunModuleActor received 'RunModule' message");
             Messages.RunModule receivedMessage = (Messages.RunModule) message;
             this.runLearning( receivedMessage.moduleFileName,
                     receivedMessage.modelConfig );
@@ -35,6 +35,8 @@ public class ClientRunModuleActor extends UntypedActor {
 
     // Runs module
     private void runLearning(String moduleFileName, String modelConfig ) {
+        log.info("***** ClientRunModuleActor used 'runLearning' method");
+        log.info("---------" + moduleFileName +"/"+ modelConfig);
         Configuration.ConfigurationDTO configuration;
         try {
             Configuration configurationHandler = new Configuration();

@@ -16,6 +16,7 @@ import os
 from torchvision.models import vgg11
 from model_configurations.simple_cnn import CNN
 from model_configurations.mnist_model import MNIST
+from model_configurations.mimic_model import MIMIC
 
 import syft as sy
 from syft.workers import websocket_client
@@ -52,6 +53,7 @@ def loss_fn(pred, target):
     return F.cross_entropy(input=pred, target=target.long())
 
 def define_and_get_arguments(args=sys.argv[1:]):
+    print("---define_and_get_arguments --- server.py")
     parser = argparse.ArgumentParser(
         description="Run federated learning using websocket client workers."
     )
@@ -81,7 +83,7 @@ def define_and_get_arguments(args=sys.argv[1:]):
 
     parser.add_argument("--datapath", help="show program version", action="store", default="../data")
     parser.add_argument("--pathToResources", help="where to store", action="store", default="")
-    parser.add_argument("--publicKeys", help="public keys", action="store", default="{}")
+    parser.add_argument("--publicKeys", help="public keys", action="store", default="") # 05.02 TODO changed default from "{}"
     parser.add_argument("--degree", help="public keys", action="store", default=0)
     parser.add_argument("--participantsjsonlist", help="show program version", action="store", default="{}")
     parser.add_argument("--epochs", type=int, help="show program version", action="store", default=10)
@@ -103,6 +105,7 @@ async def fit_model_on_worker(
     lr: float,
 ):
 
+    print("---fit_model_on_worker --- server.py")
     train_config = sy.TrainConfig(
             model=traced_model,
             loss_fn=loss_fn,
@@ -114,13 +117,13 @@ async def fit_model_on_worker(
             optimizer_args={"lr": lr, "weight_decay": lr*0.1},
     )
     train_config.send(worker)
-    loss = await worker.async_fit(dataset_key="mnist", return_ids=[0])
+    loss = await worker.async_fit(dataset_key="mimic", return_ids=[0])
     model = train_config.model_ptr.get().obj
     return worker.id, model, loss
 
 
 async def test(test_worker, traced_model, batch_size, federate_after_n_batches, learning_rate, model_output):
-    
+    print("---test --- server.py")
     model_config = sy.TrainConfig(
         model=traced_model,
         loss_fn=loss_fn,
@@ -133,10 +136,13 @@ async def test(test_worker, traced_model, batch_size, federate_after_n_batches, 
     )
     with torch.no_grad():
         model_config.send(test_worker)
-        worker_result = test_worker.evaluate(dataset_key="mnist", return_histograms = True, nr_bins = model_output)
+        # worker_result = test_worker.evaluate(dataset_key="mnist", return_histograms = True, nr_bins = model_output)
+        worker_result = test_worker.evaluate(dataset_key="mimic", return_histograms = True, nr_bins = model_output)
     return worker_result['nr_correct_predictions'], worker_result['nr_predictions'], worker_result['loss'], worker_result['histogram_target'],  worker_result['histogram_predictions']
 
-def define_model(model_config, device, modelpath, model_output): 
+def define_model(model_config, device, modelpath, model_output):
+    print("---define_model --- server.py")
+
     model_file = Path(modelpath)
     test_tensor = torch.zeros([1, 3, 224, 224])
     if (model_config == 'vgg'):
@@ -157,12 +163,17 @@ def define_model(model_config, device, modelpath, model_output):
         model = MNIST().to(device)
         test_tensor = torch.zeros([1, 1, 28, 28])
 
+    if (model_config == 'mimic'):
+        model = MIMIC().to(device)
+        test_tensor = torch.zeros([1, 48, 19]) # TODO MIKOLAJ 03.02
+
     if model_file.is_file():
         model.load_state_dict(torch.load(modelpath))
     return model, test_tensor
 
 def define_participants_lists(participantsjsonlist, **kwargs_websocket):
-        
+    print("---define_participants_lists --- server.py")
+
     participants = participantsjsonlist.replace("'","\"")
     participants = json.loads(participants)
     print(participants)
@@ -191,6 +202,7 @@ def define_participants_lists(participantsjsonlist, **kwargs_websocket):
     return worker_instances, worker_instances_test
 
 async def main():
+    print("---main --- server.py")
     #set up environment
     args = define_and_get_arguments()
     #os.chdir('./akka-server/Server/')

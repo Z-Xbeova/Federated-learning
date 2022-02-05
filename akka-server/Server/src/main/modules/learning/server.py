@@ -4,6 +4,7 @@ import torch as th
 from syft.workers.websocket_server import WebsocketServerWorker
 from torchvision import datasets, transforms
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Dataset
 
 import syft as sy
 
@@ -25,22 +26,35 @@ parser.add_argument(
 
 parser.add_argument("--datapath", help="pass path to data", action="store", default="../data")
 
+class MIMIC_dataset(Dataset, datapath):
+    def __init__(self):
+        x, targets = torch.load(datapath + "/training.pt")
+        self.n_samples = x.shape[0]
+
+    def __getitem__(self,index):
+        return self.x[index], self.targets[index]
+    def __len__(self):
+        return self.n_samples
 
 def main(datapath, **kwargs):  # pragma: no cover
     """Helper function for spinning up a websocket participant."""
+    print("!!!!!!!!!!!!!!!!!!!TO NIE JEST UZYWANE")
 
     # Create websocket worker
     worker = WebsocketServerWorker(**kwargs)
 
-    dataset2 = datasets.MNIST(datapath, train=True, transform=transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-    ))
+    dataset2 = MIMIC_dataset(datapath)
+
+    #dataset2 = datasets.MIMIC_dataset(datapath, train=True, transform=transforms.Compose(
+    #    [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+    #))
     data = [x[0] for x in dataset2]
     train_base = sy.BaseDataset(data=data, targets=dataset2.targets)
 
     # Tell the worker about the dataset
-    worker.add_dataset(train_base, key="mnist")
+    #worker.add_dataset(train_base, key="mnist") todo commented out
 
+    worker.add_dataset(train_base, key="mimic")
     # Start worker
     worker.start()
 
